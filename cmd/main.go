@@ -1,7 +1,24 @@
 package main
 
-import "fmt"
+import (
+	"github.com/gofiber/fiber/v3"
+	"github.com/zyxevls/internal/config"
+	"github.com/zyxevls/internal/delivery/http"
+	"github.com/zyxevls/internal/infrastructure/database"
+)
 
 func main() {
-	fmt.Println("Hello World")
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		panic(err)
+	}
+
+	db := database.NewPostgres(cfg)
+	defer db.Close()
+
+	app := fiber.New()
+
+	http.NewRouter(app)
+
+	app.Listen(":8080")
 }
