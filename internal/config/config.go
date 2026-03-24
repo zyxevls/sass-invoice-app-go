@@ -7,7 +7,10 @@ import (
 )
 
 type Config struct {
-	DatabaseURL string
+	DatabaseURL          string
+	MidtransServerKey    string
+	MidtransClientKey    string
+	MidtransIsProduction bool
 }
 
 func LoadConfig() (*Config, error) {
@@ -20,7 +23,10 @@ func LoadConfig() (*Config, error) {
 	}
 
 	config := &Config{
-		DatabaseURL: viper.GetString("DATABASE_URL"),
+		DatabaseURL:          viper.GetString("DATABASE_URL"),
+		MidtransServerKey:    viper.GetString("MIDTRANS_SERVER_KEY"),
+		MidtransClientKey:    viper.GetString("MIDTRANS_CLIENT_KEY"),
+		MidtransIsProduction: viper.GetBool("MIDTRANS_IS_PRODUCTION"),
 	}
 	return config, nil
 }
