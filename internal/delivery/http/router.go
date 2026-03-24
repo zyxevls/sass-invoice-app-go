@@ -5,7 +5,9 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/zyxevls/internal/config"
 	"github.com/zyxevls/internal/delivery/http/handler"
+	"github.com/zyxevls/internal/infrastructure/email"
 	"github.com/zyxevls/internal/infrastructure/midtrans"
+	"github.com/zyxevls/internal/infrastructure/pdf"
 	"github.com/zyxevls/internal/repository"
 	"github.com/zyxevls/internal/usecase"
 )
@@ -16,11 +18,11 @@ func NewRouter(app *fiber.App, db *sqlx.DB, cfg *config.Config) {
 
 	//init layer
 	invoiceRepo := repository.NewInvoiceRepository(db)
-	invoiceUsecase := usecase.NewInvoiceUsecase(invoiceRepo)
+	midtransSvc := midtrans.NewMidtransService(cfg)
+	invoiceUsecase := usecase.NewInvoiceUsecase(invoiceRepo, cfg, midtransSvc)
 	invoiceHandler := handler.NewInvoiceHandler(invoiceUsecase)
 	paymentRepo := repository.NewPaymentRepository(db)
-	midtransSvc := midtrans.NewMidtransService(cfg)
-	paymentUsecase := usecase.NewPaymentUseCase(paymentRepo, midtransSvc)
+	paymentUsecase := usecase.NewPaymentUseCase(paymentRepo, invoiceRepo, midtransSvc, email.NewEmailService(cfg), pdf.NewPDFService())
 	paymentHandler := handler.NewPaymentHandler(paymentUsecase)
 
 	v1.Get("/health", func(c fiber.Ctx) error {

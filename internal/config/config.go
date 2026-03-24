@@ -11,6 +11,10 @@ type Config struct {
 	MidtransServerKey    string
 	MidtransClientKey    string
 	MidtransIsProduction bool
+	SMTPHost             string
+	SMTPPort             int
+	SMTPEmail            string
+	SMTPPass             string
 }
 
 func LoadConfig() (*Config, error) {
@@ -27,6 +31,10 @@ func LoadConfig() (*Config, error) {
 		MidtransServerKey:    viper.GetString("MIDTRANS_SERVER_KEY"),
 		MidtransClientKey:    viper.GetString("MIDTRANS_CLIENT_KEY"),
 		MidtransIsProduction: viper.GetBool("MIDTRANS_IS_PRODUCTION"),
+		SMTPHost:             viper.GetString("SMTP_HOST"),
+		SMTPPort:             viper.GetInt("SMTP_PORT"),
+		SMTPEmail:            viper.GetString("SMTP_EMAIL"),
+		SMTPPass:             viper.GetString("SMTP_PASS"),
 	}
 	return config, nil
 }

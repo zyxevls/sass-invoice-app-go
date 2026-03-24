@@ -1,7 +1,11 @@
 package usecase
 
 import (
+	"github.com/zyxevls/internal/config"
 	"github.com/zyxevls/internal/domain"
+	"github.com/zyxevls/internal/infrastructure/email"
+	"github.com/zyxevls/internal/infrastructure/midtrans"
+	"github.com/zyxevls/internal/infrastructure/pdf"
 	"github.com/zyxevls/internal/repository"
 )
 
@@ -11,7 +15,10 @@ type InvoiceUsecase interface {
 }
 
 type invoiceUsecase struct {
-	repo repository.InvoiceRepository
+	repo     repository.InvoiceRepository
+	email    *email.EmailService
+	pdf      *pdf.PDFService
+	midtrans *midtrans.MidtransService
 }
 
 type CreateInvoiceRequest struct {
@@ -26,8 +33,13 @@ type InvoiceItemInput struct {
 	Price int64  `json:"price"`
 }
 
-func NewInvoiceUsecase(r repository.InvoiceRepository) InvoiceUsecase {
-	return &invoiceUsecase{r}
+func NewInvoiceUsecase(r repository.InvoiceRepository, cfg *config.Config, m *midtrans.MidtransService) InvoiceUsecase {
+	return &invoiceUsecase{
+		repo:     r,
+		email:    email.NewEmailService(cfg),
+		pdf:      pdf.NewPDFService(),
+		midtrans: m,
+	}
 }
 
 func (u *invoiceUsecase) CreateInvoice(req CreateInvoiceRequest) error {
@@ -40,11 +52,43 @@ func (u *invoiceUsecase) CreateInvoice(req CreateInvoiceRequest) error {
 		})
 	}
 
-	return u.repo.CreateInvoice(repository.CreateInvoiceRequest{
+	invoice, err := u.repo.CreateInvoice(repository.CreateInvoiceRequest{
 		UserID:      req.UserID,
 		ClientEmail: req.ClientEmail,
 		Items:       repoItems,
 	})
+	if err != nil {
+		return err
+	}
+
+	totalAmount := int64(0)
+	if invoice.TotalAmount != nil {
+		totalAmount = int64(*invoice.TotalAmount)
+	}
+
+	invoiceCode := ""
+	if invoice.InvoiceCode != nil {
+		invoiceCode = *invoice.InvoiceCode
+	}
+
+	paymentURL, err := u.midtrans.CreateTransaction(invoice.ID, totalAmount, req.ClientEmail)
+	if err != nil {
+		return err
+	}
+
+	pdfFile, err := u.pdf.GenerateInvoice(invoiceCode, req.ClientEmail, totalAmount)
+	if err != nil {
+		return err
+	}
+
+	emailBody := email.InvoiceTemplate(invoiceCode, totalAmount, paymentURL)
+
+	err = u.email.Send(req.ClientEmail, "Invoice #"+invoiceCode, emailBody, pdfFile)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (u *invoiceUsecase) GetInvoices() ([]domain.Invoice, error) {

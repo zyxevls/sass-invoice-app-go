@@ -12,8 +12,9 @@ import (
 type InvoiceRepository interface {
 	Create(invoice *domain.Invoice, items []domain.InvoiceItem) error
 	FindAll() ([]domain.Invoice, error)
-	CreateInvoice(req CreateInvoiceRequest) error
+	CreateInvoice(req CreateInvoiceRequest) (*domain.Invoice, error)
 	GetInvoices() ([]domain.Invoice, error)
+	GetByID(id string) (*domain.Invoice, error)
 }
 
 type invoiceRepository struct {
@@ -94,7 +95,7 @@ func (r *invoiceRepository) FindAll() ([]domain.Invoice, error) {
 	return invoices, err
 }
 
-func (u *invoiceRepository) CreateInvoice(req CreateInvoiceRequest) error {
+func (u *invoiceRepository) CreateInvoice(req CreateInvoiceRequest) (*domain.Invoice, error) {
 	invoiceID := uuid.New().String()
 
 	var total int64
@@ -132,9 +133,23 @@ func (u *invoiceRepository) CreateInvoice(req CreateInvoiceRequest) error {
 		CreatedAt:   &createdAt,
 	}
 
-	return u.Create(invoice, items)
+	err := u.Create(invoice, items)
+	if err != nil {
+		return nil, err
+	}
+
+	return invoice, nil
 }
 
 func (u *invoiceRepository) GetInvoices() ([]domain.Invoice, error) {
 	return u.FindAll()
+}
+
+func (u *invoiceRepository) GetByID(id string) (*domain.Invoice, error) {
+	invoice := &domain.Invoice{}
+	err := u.db.Get(invoice, "SELECT * FROM invoices WHERE id=$1", id)
+	if err != nil {
+		return nil, err
+	}
+	return invoice, nil
 }

@@ -8,6 +8,7 @@ import (
 type PaymentRepository interface {
 	Create(p *domain.Payment) error
 	UpdateStatus(orderID string, status string) error
+	GetByOrderID(orderID string) (*domain.Payment, error)
 }
 
 type paymentRepository struct {
@@ -47,4 +48,12 @@ func (r *paymentRepository) UpdateStatus(orderID string, status string) error {
 		return err
 	}
 	return nil
+}
+func (r *paymentRepository) GetByOrderID(orderID string) (*domain.Payment, error) {
+	payment := &domain.Payment{}
+	err := r.db.Get(payment, "SELECT * FROM payments WHERE midtrans_order_id=$1", orderID)
+	if err != nil {
+		return nil, err
+	}
+	return payment, nil
 }
