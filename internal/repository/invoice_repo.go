@@ -43,8 +43,8 @@ func (r *invoiceRepository) Create(invoice *domain.Invoice, items []domain.Invoi
 	}
 
 	var userID any
-	if invoice.UserID != "" {
-		userID = invoice.UserID
+	if invoice.UserID != nil && *invoice.UserID != "" {
+		userID = *invoice.UserID
 	}
 
 	query := `
@@ -103,24 +103,33 @@ func (u *invoiceRepository) CreateInvoice(req CreateInvoiceRequest) error {
 	for _, i := range req.Items {
 		total += int64(i.Qty) * i.Price
 
+		name := i.Name
+		price := float64(i.Price)
+
 		items = append(items, domain.InvoiceItem{
 			ID:        uuid.NewString(),
 			InvoiceID: invoiceID,
-			Name:      i.Name,
+			Name:      &name,
 			Qty:       i.Qty,
-			Price:     float64(i.Price),
+			Price:     &price,
 		})
 	}
 
+	invoiceCode := "INV-" + time.Now().Format("20060102150405")
+	status := "pending"
+	totalAmount := float64(total)
+	expiredAt := time.Now().Add(24 * time.Hour)
+	createdAt := time.Now()
+
 	invoice := &domain.Invoice{
 		ID:          invoiceID,
-		UserID:      req.UserID,
-		InvoiceCode: "INV-" + time.Now().Format("20060102150405"),
-		ClientEmail: req.ClientEmail,
-		Status:      "pending",
-		TotalAmount: float64(total),
-		ExpiredAt:   time.Now().Add(24 * time.Hour),
-		CreatedAt:   time.Now(),
+		UserID:      &req.UserID,
+		InvoiceCode: &invoiceCode,
+		ClientEmail: &req.ClientEmail,
+		Status:      &status,
+		TotalAmount: &totalAmount,
+		ExpiredAt:   &expiredAt,
+		CreatedAt:   &createdAt,
 	}
 
 	return u.Create(invoice, items)
