@@ -24,6 +24,9 @@ func NewRouter(app *fiber.App, db *sqlx.DB, cfg *config.Config) {
 	paymentRepo := repository.NewPaymentRepository(db)
 	paymentUsecase := usecase.NewPaymentUseCase(paymentRepo, invoiceRepo, midtransSvc, email.NewEmailService(cfg), pdf.NewPDFService())
 	paymentHandler := handler.NewPaymentHandler(paymentUsecase)
+	dashboardRepo := repository.NewDashboardRepository(db)
+	dashboardUsecase := usecase.NewDashboardUsecase(dashboardRepo)
+	dashboardHandler := handler.NewDashboardHandler(dashboardUsecase)
 
 	v1.Get("/health", func(c fiber.Ctx) error {
 		return c.JSON(fiber.Map{
@@ -35,4 +38,7 @@ func NewRouter(app *fiber.App, db *sqlx.DB, cfg *config.Config) {
 	v1.Post("/payments", paymentHandler.Create)
 	v1.Post("/payments/webhook", paymentHandler.WebHook)
 	v1.Get("/invoices", invoiceHandler.GetAll)
+	v1.Get("/dashboard", dashboardHandler.Get)
+	v1.Get("/dashboard/top-customer", dashboardHandler.GetTopCustomer)
+	v1.Get("/dashboard/recent-transaction", dashboardHandler.GetRecentTransaction)
 }
