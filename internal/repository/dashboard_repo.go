@@ -54,7 +54,7 @@ func (r *dashboardRepository) GetSummary() (map[string]interface{}, error) {
 
 func (r *dashboardRepository) GetRevenueChart() ([]map[string]interface{}, error) {
 	rows, err := r.db.Query(`
-	SELECT DATE(created_at), SUM(total_amount)
+	SELECT COALESCE(DATE(created_at)::text, ''), SUM(total_amount)
 	FROM invoices
 	WHERE status='paid'
 	GROUP BY DATE(created_at)
@@ -90,7 +90,7 @@ func (r *dashboardRepository) GetRevenueChart() ([]map[string]interface{}, error
 
 func (r *dashboardRepository) GetInvoiceChart() ([]map[string]interface{}, error) {
 	rows, err := r.db.Query(`
-	SELECT DATE(created_at), COUNT(*)
+	SELECT COALESCE(DATE(created_at)::text, ''), COUNT(*)
 	FROM invoices
 	GROUP BY DATE(created_at)
 	ORDER BY DATE(created_at)
@@ -125,9 +125,9 @@ func (r *dashboardRepository) GetInvoiceChart() ([]map[string]interface{}, error
 
 func (r *dashboardRepository) GetTopCustomer() ([]map[string]interface{}, error) {
 	rows, err := r.db.Query(`
-	SELECT customer_name, COUNT(*) as total_invoice, SUM(total_amount) as total_revenue
+	SELECT client_email, COUNT(*) as total_invoice, SUM(total_amount) as total_revenue
 	FROM invoices
-	GROUP BY customer_name
+	GROUP BY client_email
 	ORDER BY total_revenue DESC
 	LIMIT 10
 	`)
@@ -139,16 +139,16 @@ func (r *dashboardRepository) GetTopCustomer() ([]map[string]interface{}, error)
 	var result []map[string]interface{}
 
 	for rows.Next() {
-		var customerName string
+		var clientEmail string
 		var totalInvoice int
 		var totalRevenue int64
 
-		if err := rows.Scan(&customerName, &totalInvoice, &totalRevenue); err != nil {
+		if err := rows.Scan(&clientEmail, &totalInvoice, &totalRevenue); err != nil {
 			return nil, err
 		}
 
 		result = append(result, map[string]interface{}{
-			"customer_name": customerName,
+			"client_email":  clientEmail,
 			"total_invoice": totalInvoice,
 			"total_revenue": totalRevenue,
 		})
@@ -163,7 +163,7 @@ func (r *dashboardRepository) GetTopCustomer() ([]map[string]interface{}, error)
 
 func (r *dashboardRepository) GetRecentTransaction() ([]map[string]interface{}, error) {
 	rows, err := r.db.Query(`
-	SELECT invoice_number, customer_name, total_amount, status, created_at
+	SELECT COALESCE(invoice_code, ''), COALESCE(client_email, ''), COALESCE(total_amount, 0), COALESCE(status, ''), COALESCE(created_at::text, '')
 	FROM invoices
 	ORDER BY created_at DESC
 	LIMIT 10
@@ -176,22 +176,22 @@ func (r *dashboardRepository) GetRecentTransaction() ([]map[string]interface{}, 
 	var result []map[string]interface{}
 
 	for rows.Next() {
-		var invoiceNumber string
-		var customerName string
+		var invoiceCode string
+		var clientEmail string
 		var totalAmount int64
 		var status string
 		var createdAt string
 
-		if err := rows.Scan(&invoiceNumber, &customerName, &totalAmount, &status, &createdAt); err != nil {
+		if err := rows.Scan(&invoiceCode, &clientEmail, &totalAmount, &status, &createdAt); err != nil {
 			return nil, err
 		}
 
 		result = append(result, map[string]interface{}{
-			"invoice_number": invoiceNumber,
-			"customer_name":  customerName,
-			"total_amount":   totalAmount,
-			"status":         status,
-			"created_at":     createdAt,
+			"invoice_code": invoiceCode,
+			"client_email": clientEmail,
+			"total_amount": totalAmount,
+			"status":       status,
+			"created_at":   createdAt,
 		})
 	}
 
