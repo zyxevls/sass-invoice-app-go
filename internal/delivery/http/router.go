@@ -8,6 +8,7 @@ import (
 	"github.com/zyxevls/internal/infrastructure/email"
 	"github.com/zyxevls/internal/infrastructure/midtrans"
 	"github.com/zyxevls/internal/infrastructure/pdf"
+	"github.com/zyxevls/internal/infrastructure/redis"
 	"github.com/zyxevls/internal/repository"
 	"github.com/zyxevls/internal/usecase"
 )
@@ -24,7 +25,10 @@ func NewRouter(app *fiber.App, db *sqlx.DB, cfg *config.Config) {
 	paymentRepo := repository.NewPaymentRepository(db)
 	paymentUsecase := usecase.NewPaymentUseCase(paymentRepo, invoiceRepo, midtransSvc, email.NewEmailService(cfg), pdf.NewPDFService())
 	paymentHandler := handler.NewPaymentHandler(paymentUsecase)
-	dashboardRepo := repository.NewDashboardRepository(db)
+	
+	// Initialize Redis for caching
+	rdb := redis.NewRedis()
+	dashboardRepo := repository.NewDashboardRepositoryWithRedis(db, rdb)
 	dashboardUsecase := usecase.NewDashboardUsecase(dashboardRepo)
 	dashboardHandler := handler.NewDashboardHandler(dashboardUsecase)
 
