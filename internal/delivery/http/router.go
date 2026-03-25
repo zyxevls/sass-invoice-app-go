@@ -18,6 +18,7 @@ func NewRouter(app *fiber.App, db *sqlx.DB, cfg *config.Config) {
 	v1 := api.Group("/v1")
 
 	//init layer
+	userRepo := repository.NewUserRepository(db)
 	invoiceRepo := repository.NewInvoiceRepository(db)
 	midtransSvc := midtrans.NewMidtransService(cfg)
 	invoiceUsecase := usecase.NewInvoiceUsecase(invoiceRepo, cfg, midtransSvc)
@@ -25,9 +26,13 @@ func NewRouter(app *fiber.App, db *sqlx.DB, cfg *config.Config) {
 	paymentRepo := repository.NewPaymentRepository(db)
 	paymentUsecase := usecase.NewPaymentUseCase(paymentRepo, invoiceRepo, midtransSvc, email.NewEmailService(cfg), pdf.NewPDFService())
 	paymentHandler := handler.NewPaymentHandler(paymentUsecase)
-	
+
 	// Initialize Redis for caching
 	rdb := redis.NewRedis()
+
+	authUsecase := usecase.NewAuthUsecase(userRepo)
+	authHandler := handler.NewAuthHandler(authUsecase)
+
 	dashboardRepo := repository.NewDashboardRepositoryWithRedis(db, rdb)
 	dashboardUsecase := usecase.NewDashboardUsecase(dashboardRepo)
 	dashboardHandler := handler.NewDashboardHandler(dashboardUsecase)
@@ -38,6 +43,8 @@ func NewRouter(app *fiber.App, db *sqlx.DB, cfg *config.Config) {
 		})
 	})
 
+	v1.Post("/auth/register", authHandler.Register)
+	v1.Post("/auth/login", authHandler.Login)
 	v1.Post("/invoices", invoiceHandler.Create)
 	v1.Post("/payments", paymentHandler.Create)
 	v1.Post("/payments/webhook", paymentHandler.WebHook)

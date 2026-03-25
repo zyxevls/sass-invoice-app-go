@@ -9,7 +9,7 @@ import (
 )
 
 type AuthUsecase interface {
-	Register(email, password string) error
+	Register(name, email, password, role string) error
 	Login(email, password string) (string, error)
 }
 
@@ -21,22 +21,27 @@ func NewAuthUsecase(r repository.UserRepository) AuthUsecase {
 	return &authUsecase{r}
 }
 
-func (u *authUsecase) Register(email, password string) error {
+func (u *authUsecase) Register(name, email, password, role string) error {
 	hash, _ := bcrypt.GenerateFromPassword([]byte(password), 10)
 
 	user := &domain.User{
 		ID:       uuid.NewString(),
+		Name:     name,
 		Email:    email,
 		Password: string(hash),
+		Role:     role,
 	}
 
 	return u.repo.Create(user)
 }
 
 func (u *authUsecase) Login(email, password string) (string, error) {
-	user, _ := u.repo.FindByEmail(email)
+	user, err := u.repo.FindByEmail(email)
+	if err != nil {
+		return "", err
+	}
 
-	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
 		return "", err
 	}
