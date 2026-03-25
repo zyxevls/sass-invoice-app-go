@@ -4,6 +4,7 @@ A robust Go-based SaaS invoice management system featuring automated PDF generat
 
 ## 🚀 Features
 
+- **Authentication**: Secure user registration and login with JWT (JSON Web Tokens).
 - **Invoice Management**: Create and track invoices with automated status updates.
 - **Payment Integration**: Seamless payment processing using Midtrans Snap API.
 - **PDF Generation**: Automatic generation of invoice PDFs with custom styling.
@@ -65,13 +66,40 @@ A robust Go-based SaaS invoice management system featuring automated PDF generat
 
 ## 📡 API Documentation
 
-### Create Invoice
+### 🔐 Authentication
+
+#### Register User
+- **Endpoint**: `POST /api/v1/auth/register`
+- **Request Body**:
+  ```json
+  {
+    "name": "Testing User",
+    "email": "[EMAIL_ADDRESS]",
+    "password": "[PASSWORD]"
+  }
+  ```
+
+#### Login
+- **Endpoint**: `POST /api/v1/auth/login`
+- **Request Body**:
+  ```json
+  {
+    "email": "[EMAIL_ADDRESS]",
+    "password": "[PASSWORD]"
+  }
+  ```
+- **Response**: `200 OK` with JWT token.
+
+### 📄 Invoices
+
+#### Create Invoice
 - **Endpoint**: `POST /api/v1/invoices`
+- **Authorization**: `Bearer <token>`
 - **Request Body**:
   ```json
   {
     "user_id": "user-uuid",
-    "client_email": "client@example.com",
+    "client_email": "[EMAIL_ADDRESS]",
     "items": [
       {
         "name": "Web Hosting (1 Year)",
@@ -102,9 +130,10 @@ A robust Go-based SaaS invoice management system featuring automated PDF generat
 │   ├── infrastructure/ # External services (Email, PDF, Midtrans)
 │   ├── repository/     # Database operations
 │   └── usecase/        # Business logic
+├── migrations/         # SQL migration files
 ├── .env                # Environment variables
 └── go.mod              # Dependencies
 ```
 
-## 📄 License
+## ⚖ License
 This project is licensed under the MIT License - see the LICENSE file for details.
