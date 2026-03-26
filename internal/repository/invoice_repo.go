@@ -49,8 +49,8 @@ func (r *invoiceRepository) Create(invoice *domain.Invoice, items []domain.Invoi
 	}
 
 	query := `
-	INSERT INTO invoices (id, user_id, invoice_code, client_email, status, total_amount, expired_at)
-	VALUES ($1, $2, $3, $4, $5, $6, $7)
+	INSERT INTO invoices (id, user_id, invoice_code, client_email, status, total_amount, expired_at, created_at)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`
 
 	_, err = tx.Exec(query,
@@ -61,6 +61,7 @@ func (r *invoiceRepository) Create(invoice *domain.Invoice, items []domain.Invoi
 		invoice.Status,
 		invoice.TotalAmount,
 		invoice.ExpiredAt,
+		invoice.CreatedAt,
 	)
 	if err != nil {
 		_ = tx.Rollback()
@@ -142,7 +143,10 @@ func (u *invoiceRepository) CreateInvoice(req CreateInvoiceRequest) (*domain.Inv
 }
 
 func (u *invoiceRepository) GetInvoices() ([]domain.Invoice, error) {
-	return u.FindAll()
+	invoices := make([]domain.Invoice, 0)
+
+	err := u.db.Select(&invoices, "SELECT * FROM invoices ORDER BY created_at DESC")
+	return invoices, err
 }
 
 func (u *invoiceRepository) GetByID(id string) (*domain.Invoice, error) {

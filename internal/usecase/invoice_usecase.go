@@ -12,6 +12,7 @@ import (
 type InvoiceUsecase interface {
 	CreateInvoice(req CreateInvoiceRequest) error
 	GetInvoices() ([]domain.Invoice, error)
+	GetInvoiceByID(id string) (*domain.Invoice, error)
 }
 
 type invoiceUsecase struct {
@@ -93,4 +94,8 @@ func (u *invoiceUsecase) CreateInvoice(req CreateInvoiceRequest) error {
 
 func (u *invoiceUsecase) GetInvoices() ([]domain.Invoice, error) {
 	return u.repo.GetInvoices()
+}
+
+func (u *invoiceUsecase) GetInvoiceByID(id string) (*domain.Invoice, error) {
+	return u.repo.GetByID(id)
 }

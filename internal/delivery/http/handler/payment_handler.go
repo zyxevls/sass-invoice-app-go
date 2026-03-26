@@ -48,5 +48,6 @@ func (h *PaymentHandler) WebHook(c fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.SendString("OK")
+
+	return c.JSON(fiber.Map{"message": "webhook processed", "order_id": p.OrderID, "transaction_status": p.TransactionStatus})
 }

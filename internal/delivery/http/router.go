@@ -43,12 +43,17 @@ func NewRouter(app *fiber.App, db *sqlx.DB, cfg *config.Config) {
 		})
 	})
 
+	//auth
 	v1.Post("/auth/register", authHandler.Register)
 	v1.Post("/auth/login", authHandler.Login)
+	//invoice
 	v1.Post("/invoices", invoiceHandler.Create)
+	v1.Get("/invoices", invoiceHandler.GetAll)
+	v1.Get("/invoices/:id", invoiceHandler.GetByID)
+	//payment
 	v1.Post("/payments", paymentHandler.Create)
 	v1.Post("/payments/webhook", paymentHandler.WebHook)
-	v1.Get("/invoices", invoiceHandler.GetAll)
+	//dashboard
 	v1.Get("/dashboard", dashboardHandler.Get)
 	v1.Get("/dashboard/top-customer", dashboardHandler.GetTopCustomer)
 	v1.Get("/dashboard/recent-transaction", dashboardHandler.GetRecentTransaction)

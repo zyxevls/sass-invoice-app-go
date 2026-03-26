@@ -39,7 +39,7 @@ func (h *AuthHandler) Register(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "Failed to register user"})
 	}
 
-	return c.SendStatus(201)
+	return c.JSON(fiber.Map{"message": "User registered successfully", "email": req.Email})
 }
 
 func (h *AuthHandler) Login(c fiber.Ctx) error {
@@ -58,5 +58,5 @@ func (h *AuthHandler) Login(c fiber.Ctx) error {
 		return c.Status(401).JSON(fiber.Map{"error": "Unauthorized", "details": "Invalid email or password"})
 	}
 
-	return c.JSON(fiber.Map{"token": token})
+	return c.JSON(fiber.Map{"message": "Login successful", "email": req.Email, "token": token})
 }

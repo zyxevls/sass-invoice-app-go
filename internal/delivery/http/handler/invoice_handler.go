@@ -33,5 +33,14 @@ func (h *InvoiceHandler) GetAll(c fiber.Ctx) error {
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.JSON(data)
+	return c.JSON(fiber.Map{"invoices": data})
+}
+
+func (h *InvoiceHandler) GetByID(c fiber.Ctx) error {
+	id := c.Params("id")
+	data, err := h.usecase.GetInvoiceByID(id)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"invoice": data})
 }
